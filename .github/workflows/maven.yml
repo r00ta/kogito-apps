@@ -4,9 +4,10 @@
 name: Java CI with Maven
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
-    paths:
-    - 'trusty/*'
+    branches: [ master ]
 
 jobs:
   build:
