@@ -12,6 +12,7 @@
   <name>Kogito :: Trusty</name>
   <packaging>pom</packaging>
 
+
   <modules>
     <module>trusty-service</module>
     <module>trusty-storage</module>
