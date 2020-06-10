@@ -105,16 +105,16 @@ public class InfinispanCacheManager implements StorageService {
 
     @Override
     public Storage<String, String> getCache(String index){
-        return new StorageImpl<>(manager.administration().getOrCreateCache(index, (String) null), String.class.getName());
+        return new StorageInfinispanImpl<>(manager.administration().getOrCreateCache(index, (String) null), String.class.getName());
     }
 
     @Override
     public <T> Storage<String, T> getCache(String index, Class<T> type) {
-        return new StorageImpl<>(getOrCreateCache(index, cacheTemplateName), type.getName());
+        return new StorageInfinispanImpl<>(getOrCreateCache(index, cacheTemplateName), type.getName());
     }
 
     @Override
     public <T> Storage<String, T> getCacheWithDataFormat(String index, Class<T> type, String rootType){
-        return new StorageImpl<>(getOrCreateCache(index, cacheTemplateName).withDataFormat(jsonDataFormat), rootType);
+        return new StorageInfinispanImpl<>(getOrCreateCache(index, cacheTemplateName).withDataFormat(jsonDataFormat), rootType);
     }
 }

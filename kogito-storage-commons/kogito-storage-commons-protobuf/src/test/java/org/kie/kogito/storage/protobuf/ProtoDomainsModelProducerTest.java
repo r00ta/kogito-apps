@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
@@ -14,22 +16,33 @@
  * limitations under the License.
  */
 
-package org.kie.kogito.index.protobuf;
+package org.kie.kogito.storage.protobuf;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.enterprise.event.Event;
 
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.kogito.index.event.DomainModelRegisteredEvent;
+import org.kie.kogito.storage.api.proto.DomainModelRegisteredEvent;
+import org.kie.kogito.storage.protobuf.domain.ProtoDomainModelProducer;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.kie.kogito.index.protobuf.TestUtils.ADDITIONAL_DESCRIPTORS;
-import static org.kie.kogito.index.protobuf.TestUtils.DOMAIN_DESCRIPTOR;
-import static org.kie.kogito.index.protobuf.TestUtils.PROCESS_ID;
-import static org.kie.kogito.index.protobuf.TestUtils.getTestFileDescriptor;
+import static org.kie.kogito.storage.protobuf.ProtobufService.DOMAIN_MODEL_PROTO_NAME;
+import static org.kie.kogito.storage.protobuf.TestUtils.ADDITIONAL_DESCRIPTORS;
+import static org.kie.kogito.storage.protobuf.TestUtils.DOMAIN_DESCRIPTOR;
+import static org.kie.kogito.storage.protobuf.TestUtils.PROCESS_ID;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -49,5 +62,12 @@ class ProtoDomainModelProducerTest {
         protoDomainModelProducer.onFileDescriptorRegistered(event);
 
         verify(domainEvent).fire(eq(new DomainModelRegisteredEvent(PROCESS_ID, DOMAIN_DESCRIPTOR, ADDITIONAL_DESCRIPTORS)));
+    }
+
+    static FileDescriptor getTestFileDescriptor() {
+        String content = TestUtils.getTestFileContent();
+        SerializationContext ctx = new SerializationContextImpl(Configuration.builder().build());
+        ctx.registerProtoFiles(FileDescriptorSource.fromString(DOMAIN_MODEL_PROTO_NAME, content));
+        return ctx.getFileDescriptors().get(DOMAIN_MODEL_PROTO_NAME);
     }
 }
