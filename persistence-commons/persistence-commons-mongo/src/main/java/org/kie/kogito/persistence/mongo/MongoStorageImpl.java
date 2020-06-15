@@ -1,5 +1,9 @@
 package org.kie.kogito.persistence.mongo;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -8,12 +12,14 @@ import com.mongodb.client.MongoCollection;
 import org.kie.kogito.persistence.api.Storage;
 import org.kie.kogito.persistence.api.query.Query;
 
+import static com.mongodb.client.model.Filters.eq;
+
 public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     private MongoCollection collection;
     private String rootType;
 
-    public MongoStorageImpl(MongoCollection collection, String rootType){
+    public MongoStorageImpl(MongoCollection collection, String rootType) {
         this.collection = collection;
         this.rootType = rootType;
     }
@@ -35,32 +41,40 @@ public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public Query<V> query() {
-        return null;
+        return new MongoQuery<>(collection, rootType);
     }
 
     @Override
     public V get(Object key) {
-        return null;
+        return (V) collection.find(eq("entryId", key)).iterator().next();
     }
 
     @Override
     public V put(K key, V value) {
-        return null;
+        collection.insertOne(new KogitoDocument(key, value));
+        return value;
     }
 
     @Override
     public V remove(Object key) {
-        return collection.deleteOne();
+        return (V) collection.findOneAndDelete(eq("entryId", key));
     }
 
     @Override
     public boolean containsKey(K key) {
-        return false;
+        return collection.countDocuments(eq("entryId", key)) > 0;
     }
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return null;
+        Iterator<KogitoDocument> it = collection.find().iterator();
+
+        List<KogitoDocument> copy = new ArrayList<KogitoDocument>();
+        while (it.hasNext()) {
+            copy.add(it.next());
+        }
+
+        return new HashSet<>(copy);
     }
 
     @Override

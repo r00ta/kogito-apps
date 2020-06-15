@@ -35,6 +35,11 @@ public class MongoQuery<T> implements Query<T> {
     private List<AttributeSort> sortBy;
     private String rootType;
 
+    public MongoQuery(MongoCollection collection, String rootType){
+        this.collection = collection;
+        this.rootType = rootType;
+    }
+
     @Override
     public Query<T> limit(Integer limit) {
         this.limit = limit;

@@ -39,7 +39,7 @@ public class MongoStorageManager implements StorageService {
 
     @Override
     public <T> Storage<String, T> getCache(String name, Class<T> type) {
-        return new MongoStorageImpl<>(getOrCreateCollection(name, type));
+        return new MongoStorageImpl<>(getOrCreateCollection(name, type), type.getName());
     }
 
     @Override
