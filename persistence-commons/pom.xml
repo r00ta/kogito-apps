@@ -17,6 +17,7 @@
     <module>persistence-commons-api</module>
     <module>persistence-commons-infinispan</module>
     <module>persistence-commons-protobuf</module>
+    <module>persistence-commons-mongo</module>
   </modules>
 
 
