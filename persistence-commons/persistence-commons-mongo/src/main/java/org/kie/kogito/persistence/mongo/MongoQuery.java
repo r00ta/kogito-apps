@@ -1,10 +1,11 @@
 package org.kie.kogito.persistence.mongo;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.mongodb.client.MongoCollection;
 import org.bson.conversions.Bson;
 import org.kie.kogito.persistence.api.query.AttributeFilter;
 import org.kie.kogito.persistence.api.query.AttributeSort;
@@ -16,19 +17,18 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Filters.not;
 import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.regex;
-import static java.lang.String.format;
-import static java.util.stream.Collectors.joining;
-import static org.kie.kogito.persistence.api.query.FilterCondition.AND;
-import static org.kie.kogito.persistence.api.query.FilterCondition.OR;
 
 public class MongoQuery<T> implements Query<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoQuery.class);
 
+    private MongoCollection<T> collection;
     private Integer limit;
     private Integer offset;
     private List<AttributeFilter> filters;
@@ -61,7 +61,14 @@ public class MongoQuery<T> implements Query<T> {
 
     @Override
     public List<T> execute() {
-        List<Bson> conditions = new ArrayList<>();
+        List<Bson> conditions = filters.stream().map(x -> createCondition(x)).collect(Collectors.toList());
+        Iterator<T> it = collection.find(and(conditions)).iterator();
+
+        List<T> copy = new ArrayList<T>();
+        while (it.hasNext()) {
+            copy.add(it.next());
+        }
+        return copy;
     }
 
     private Bson createCondition(AttributeFilter filter) {
@@ -77,26 +84,26 @@ public class MongoQuery<T> implements Query<T> {
             case EQUAL:
                 return eq(filter.getAttribute(), filter.getValue());
             case IN:
-                return format("o.%s in (%s)", filter.getAttribute(), ((List) filter.getValue()).stream().map(getValueForQueryString()).collect(joining(", ")));
+                return in(filter.getAttribute(), ((List) filter.getValue()).stream().iterator());
             case IS_NULL:
-                return format("o.%s is null", filter.getAttribute());
+                return eq(filter.getAttribute(), null);
             case NOT_NULL:
-                return format("o.%s is not null", filter.getAttribute());
+                return not(eq(filter.getAttribute(), null));
             case BETWEEN:
                 List<Object> value = (List<Object>) filter.getValue();
-                return format("o.%s between %s and %s", filter.getAttribute(), getValueForQueryString().apply(value.get(0)), getValueForQueryString().apply(value.get(1)));
+                return and(gte(filter.getAttribute(), value.get(0)), lte(filter.getAttribute(), value.get(1)));
             case GT:
                 return gt(filter.getAttribute(), filter.getValue());
             case GTE:
                 return gte(filter.getAttribute(), filter.getValue());
             case LT:
-                return lt(filter.getAttribute(), filter.getValue());;
+                return lt(filter.getAttribute(), filter.getValue());
             case LTE:
-                return lte(filter.getAttribute(), filter.getValue());;
+                return lte(filter.getAttribute(), filter.getValue());
             case OR:
-                return getRecursiveString(filter, OR);
+                return or(createCondition(filter));
             case AND:
-                return getRecursiveString(filter, AND);
+                return and(createCondition(filter));
             default:
                 return null;
         }

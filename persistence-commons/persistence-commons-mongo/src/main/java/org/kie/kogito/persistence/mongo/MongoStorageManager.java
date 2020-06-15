@@ -5,6 +5,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.kie.kogito.persistence.api.Storage;
 import org.kie.kogito.persistence.api.StorageService;
@@ -38,11 +39,15 @@ public class MongoStorageManager implements StorageService {
 
     @Override
     public <T> Storage<String, T> getCache(String name, Class<T> type) {
-        return null;
+        return new MongoStorageImpl<>(getOrCreateCollection(name, type));
     }
 
     @Override
     public <T> Storage<String, T> getCacheWithDataFormat(String name, Class<T> type, String rootType) {
         return null;
+    }
+
+    private MongoCollection getOrCreateCollection(String collection, Class type) {
+        return database.getCollection(collection, type);
     }
 }

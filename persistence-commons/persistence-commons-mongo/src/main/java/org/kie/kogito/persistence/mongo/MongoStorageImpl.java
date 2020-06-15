@@ -10,7 +10,13 @@ import org.kie.kogito.persistence.api.query.Query;
 
 public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
-    private MongoCollection<V> collection;
+    private MongoCollection collection;
+    private String rootType;
+
+    public MongoStorageImpl(MongoCollection collection, String rootType){
+        this.collection = collection;
+        this.rootType = rootType;
+    }
 
     @Override
     public void addObjectCreatedListener(Consumer<V> consumer) {
@@ -44,7 +50,7 @@ public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public V remove(Object key) {
-        return null;
+        return collection.deleteOne();
     }
 
     @Override
@@ -59,11 +65,11 @@ public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public void clear() {
-
+        collection.drop();
     }
 
     @Override
     public String getRootType() {
-        return null;
+        return rootType;
     }
 }
