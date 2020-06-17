@@ -46,7 +46,8 @@ public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public V get(Object key) {
-        return (V) collection.find(eq("entryId", key)).iterator().next();
+        KogitoDocument<K, V> document = (KogitoDocument<K, V>) collection.find(eq("entryId", key)).iterator().next();
+        return document.getValue();
     }
 
     @Override
@@ -57,7 +58,8 @@ public class MongoStorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public V remove(Object key) {
-        return (V) collection.findOneAndDelete(eq("entryId", key));
+        KogitoDocument<K, V> document = (KogitoDocument<K, V>) collection.findOneAndDelete(eq("entryId", key));
+        return document.getValue();
     }
 
     @Override

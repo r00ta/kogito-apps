@@ -31,7 +31,7 @@ public class MongoQuery<T> implements Query<T> {
     private MongoCollection<T> collection;
     private Integer limit;
     private Integer offset;
-    private List<AttributeFilter> filters;
+    private List<AttributeFilter<?>> filters;
     private List<AttributeSort> sortBy;
     private String rootType;
 
@@ -53,7 +53,7 @@ public class MongoQuery<T> implements Query<T> {
     }
 
     @Override
-    public Query<T> filter(List<AttributeFilter> filters) {
+    public Query<T> filter(List<AttributeFilter<?>> filters) {
         this.filters = filters;
         return this;
     }
