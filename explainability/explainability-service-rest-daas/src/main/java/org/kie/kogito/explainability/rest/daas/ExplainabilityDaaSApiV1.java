@@ -69,7 +69,7 @@ public class ExplainabilityDaaSApiV1 {
 //        PredictionProvider provider = predictionProviderFactory.createPredictionProvider(request);
 //        CompletionStage<Response> result = explanationService.explainAsync(request, provider)
 //                .thenApply(x -> Response.ok(x).build());
-
+//
 //        return Uni.createFrom().completionStage(result);
         return null;
     }

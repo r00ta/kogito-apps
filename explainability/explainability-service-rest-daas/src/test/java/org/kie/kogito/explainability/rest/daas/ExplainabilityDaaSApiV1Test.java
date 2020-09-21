@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kie.kogito.explainability.api.ExplainabilityRequestDto;
 import org.kie.kogito.explainability.api.ExplainabilityResultDto;
@@ -36,6 +37,7 @@ public class ExplainabilityDaaSApiV1Test {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
+    @Disabled
     public void testEndpointWithRequest() throws JsonProcessingException {
         String executionId = "test";
         String serviceUrl = "http://localhost:8080";
