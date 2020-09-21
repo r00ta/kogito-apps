@@ -37,6 +37,10 @@
       <groupId>org.kie.kogito</groupId>
       <artifactId>explainability-service</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-oidc</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.quarkus</groupId>
