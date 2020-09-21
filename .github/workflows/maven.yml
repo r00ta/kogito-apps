@@ -25,12 +25,12 @@ jobs:
     - name: get tag
       run: echo ::set-env name=TAG::$(date +'%d-%m-%Y-%H-%M')
     - name: Docker build
-      run: docker build -f explainability/explainability-service-rest-daas/src/main/docker/Dockerfile -t jrota/explainability-service-rest-daas:${TAG} .
+      run: docker build -f explainability/explainability-service-rest-daas/src/main/docker/Dockerfile -t quay.io/jrota/explainability-service-rest-daas:${TAG} .
     - name: Docker tag latest
-      run: docker tag jrota/explainability-service-rest-daas:${TAG} jrota/explainability-service-rest-daas:latest
+      run: docker tag quay.io/jrota/explainability-service-rest-daas:${TAG} quay.io/jrota/explainability-service-rest-daas:latest
     - name: Docker login 
       run: docker login quay.io --username jrota --password ${{ secrets.QUAY_PASSWORD }}
     - name: Docker push
-      run: docker push jrota/explainability-service-rest-daas:${TAG}
+      run: docker push quay.io/jrota/explainability-service-rest-daas:${TAG}
     - name: Docker push latest
-      run: docker push jrota/explainability-service-rest-daas:latest
+      run: docker push quay.io/jrota/explainability-service-rest-daas:latest
