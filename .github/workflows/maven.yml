@@ -19,7 +19,7 @@ jobs:
       with:
         java-version: 1.11
     - name: Install with Maven
-      run: mvn clean install -f explainability/pom.xml
+      run: mvn clean install -DskipTests -f explainability/pom.xml
     - name: Build with Maven
       run: mvn clean package -DskipTests -f explainability/explainability-service-rest-daas/pom.xml
     - name: get tag
