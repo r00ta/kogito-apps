@@ -19,7 +19,7 @@ jobs:
       with:
         java-version: 1.11
     - name: Install with Maven
-      run: mvn clean install -DskipTests -f explainability/pom.xml
+      run: mvn clean install -f explainability/pom.xml
     - name: Build with Maven
       run: mvn clean package -DskipTests -f explainability/explainability-service-rest-daas/pom.xml
     - name: get tag
@@ -29,7 +29,7 @@ jobs:
     - name: Docker tag latest
       run: docker tag jrota/explainability-service-rest-daas:${TAG} jrota/explainability-service-rest-daas:latest
     - name: Docker login 
-      run: docker login --username ${{ secrets.QUAY_USER }} --password ${{ secrets.QUAY_PASSWORD }}
+      run: docker login --username jrota --password ${{ secrets.QUAY_PASSWORD }}
     - name: Docker push
       run: docker push jrota/explainability-service-rest-daas:${TAG}
     - name: Docker push latest
