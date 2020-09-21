@@ -23,7 +23,7 @@ jobs:
     - name: Build with Maven
       run: mvn clean package -DskipTests -f explainability/explainability-service-rest-daas/pom.xml
     - name: get tag
-      run: export TAG=$(date +'%d-%m-%Y-%H-%M')
+      run: echo ::set-env name=TAG::$(date +'%d-%m-%Y-%H-%M')
     - name: Docker build
       run: docker build -f explainability/explainability-service-rest-daas/src/main/docker/Dockerfile -t jrota/explainability-service-rest-daas:${TAG} .
     - name: Docker tag latest
