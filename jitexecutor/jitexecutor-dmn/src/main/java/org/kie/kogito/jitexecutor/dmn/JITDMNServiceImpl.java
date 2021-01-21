@@ -38,7 +38,6 @@ import org.kie.dmn.core.internal.utils.DynamicDMNContextBuilder;
 import org.kie.dmn.openapi.DMNOASGeneratorFactory;
 import org.kie.dmn.openapi.model.DMNOASResult;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.kogito.jitexecutor.dmn.models.JITDMNEvaluationResult;
 
 @ApplicationScoped
 public class JITDMNServiceImpl implements JITDMNService {
@@ -51,14 +50,14 @@ public class JITDMNServiceImpl implements JITDMNService {
     }
 
     @Override
-    public JITDMNEvaluationResult evaluateModel(String modelXML, Map<String, Object> context) {
+    public org.kie.kogito.dmn.rest.DMNResult evaluateModel(String modelXML, Map<String, Object> context) {
         Resource modelResource = ResourceFactory.newReaderResource(new StringReader(modelXML), "UTF-8");
         DMNRuntime dmnRuntime = DMNRuntimeBuilder.fromDefaults().buildConfiguration()
                 .fromResources(Collections.singletonList(modelResource)).getOrElseThrow(RuntimeException::new);
         DMNModel dmnModel = dmnRuntime.getModels().get(0);
         DMNContext dmnContext = new DynamicDMNContextBuilder(dmnRuntime.newContext(), dmnModel).populateContextWith(context);
         DMNResult dmnResult = dmnRuntime.evaluateAll(dmnModel, dmnContext);
-        return new JITDMNEvaluationResult(dmnResult, dmnModel.getNamespace(), dmnModel.getName());
+        return new org.kie.kogito.dmn.rest.DMNResult(dmnModel.getNamespace(), dmnModel.getName(), dmnResult);
     }
 
     @Override
