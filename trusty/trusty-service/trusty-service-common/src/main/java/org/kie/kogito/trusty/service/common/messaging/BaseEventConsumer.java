@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.kie.kogito.cloudevents.CloudEventUtils;
@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.kafka.IncomingKafkaRecordMetadata;
-import io.smallrye.reactive.messaging.kafka.OutgoingKafkaRecordMetadata;
 
 public abstract class BaseEventConsumer<E> {
 
@@ -58,12 +57,13 @@ public abstract class BaseEventConsumer<E> {
         } catch (Exception e) {
             LOG.error("Something unexpected happened during the processing of an Event. The event is discarded.", e);
             Optional<IncomingKafkaRecordMetadata> metadata = message.getMetadata(IncomingKafkaRecordMetadata.class);//.orElse(buildFailedCounterMetadata(0));
-            System.out.println(message.toString());
             int retryCounter = 1;
             if (metadata.isPresent()) {
                 LOG.info("metadata present");
                 Header header = metadata.get().getHeaders().lastHeader("my-header");
                 if (header != null) {
+                    metadata.get().getHeaders().remove("my-header");
+                    metadata.get().getHeaders().remove("nextTimestamp");
                     LOG.info("header present");
                     retryCounter = intFromByteArray(header.value());
                 }
@@ -75,7 +75,9 @@ public abstract class BaseEventConsumer<E> {
                 LOG.error("retry counter = 10");
                 return message.ack();
             }
-            message.withMetadata(Metadata.of(buildFailedCounterMetadata(retryCounter + 1)));
+            metadata.get().getHeaders().add(new RecordHeader("my-header", intToByteArray(retryCounter)));
+            metadata.get().getHeaders().add("nextTimestamp", intToByteArray((int) System.currentTimeMillis() / 1000 + 60));
+            message.withMetadata(Metadata.of(metadata));
             return message.nack(e);
         }
         return message.ack();
@@ -99,22 +101,16 @@ public abstract class BaseEventConsumer<E> {
     private int getRetryTimeout(final Message<String> message) {
         Optional<IncomingKafkaRecordMetadata> metadata = message.getMetadata(IncomingKafkaRecordMetadata.class);
         if (metadata.isPresent()) {
-            return intFromByteArray(metadata.get().getHeaders().lastHeader("nextTimestamp").value());
+            LOG.info("metadata present");
+            Header header = metadata.get().getHeaders().lastHeader("nextTimestamp");
+            if (header != null) {
+                LOG.info("header present");
+                return intFromByteArray(header.value());
+            }
+        } else {
+            LOG.info("metadata not there");
         }
         return 0;
-    }
-
-    private OutgoingKafkaRecordMetadata updateCounterMetadata(int value) {
-        return buildFailedCounterMetadata(value);
-    }
-
-    private OutgoingKafkaRecordMetadata<String> buildFailedCounterMetadata(int value) {
-        return OutgoingKafkaRecordMetadata.<String> builder()
-                .withKey("failure-count-key")
-                .withHeaders(new RecordHeaders()
-                        .add("my-header", intToByteArray(value))
-                        .add("nextTimestamp", intToByteArray((int) System.currentTimeMillis() / 1000 + 60)))
-                .build();
     }
 
     private int intFromByteArray(byte[] bytes) {
