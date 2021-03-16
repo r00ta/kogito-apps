@@ -17,9 +17,13 @@
 package org.kie.kogito.trusty.service.common.messaging;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.kie.kogito.cloudevents.CloudEventUtils;
 import org.kie.kogito.trusty.service.common.TrustyService;
 import org.slf4j.Logger;
@@ -29,6 +33,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
+import io.smallrye.reactive.messaging.kafka.IncomingKafkaRecordMetadata;
+import io.smallrye.reactive.messaging.kafka.OutgoingKafkaRecordMetadata;
 
 public abstract class BaseEventConsumer<E> {
 
@@ -51,8 +57,79 @@ public abstract class BaseEventConsumer<E> {
             CloudEventUtils.decode(message.getPayload()).ifPresent(this::handleCloudEvent);
         } catch (Exception e) {
             LOG.error("Something unexpected happened during the processing of an Event. The event is discarded.", e);
+            Optional<IncomingKafkaRecordMetadata> metadata = message.getMetadata(IncomingKafkaRecordMetadata.class);//.orElse(buildFailedCounterMetadata(0));
+            System.out.println(message.toString());
+            int retryCounter = 1;
+            if (metadata.isPresent()) {
+                LOG.info("metadata present");
+                Header header = metadata.get().getHeaders().lastHeader("my-header");
+                if (header != null) {
+                    LOG.info("header present");
+                    retryCounter = intFromByteArray(header.value());
+                }
+            } else {
+                LOG.info("metadata not there");
+            }
+            System.out.println("SUCAAAAAAAAAAAAAA " + retryCounter);
+            if (retryCounter >= 10) {
+                LOG.error("retry counter = 10");
+                return message.ack();
+            }
+            message.withMetadata(Metadata.of(buildFailedCounterMetadata(retryCounter + 1)));
+            return message.nack(e);
         }
         return message.ack();
+    }
+
+    protected CompletionStage<Void> handleFailedMessage(final Message<String> message) {
+        int nextTimestamp = getRetryTimeout(message);
+        int currentTime = (int) System.currentTimeMillis();
+        if (nextTimestamp - currentTime > 0) {
+            try {
+                LOG.debug("sleeping for " + (nextTimestamp - currentTime) * 1000);
+                Thread.sleep((nextTimestamp - currentTime) * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        LOG.debug("processing failed message");
+        return handleMessage(message);
+    }
+
+    private int getRetryTimeout(final Message<String> message) {
+        Optional<IncomingKafkaRecordMetadata> metadata = message.getMetadata(IncomingKafkaRecordMetadata.class);
+        if (metadata.isPresent()) {
+            return intFromByteArray(metadata.get().getHeaders().lastHeader("nextTimestamp").value());
+        }
+        return 0;
+    }
+
+    private OutgoingKafkaRecordMetadata updateCounterMetadata(int value) {
+        return buildFailedCounterMetadata(value);
+    }
+
+    private OutgoingKafkaRecordMetadata<String> buildFailedCounterMetadata(int value) {
+        return OutgoingKafkaRecordMetadata.<String> builder()
+                .withKey("failure-count-key")
+                .withHeaders(new RecordHeaders()
+                        .add("my-header", intToByteArray(value))
+                        .add("nextTimestamp", intToByteArray((int) System.currentTimeMillis() / 1000 + 60)))
+                .build();
+    }
+
+    private int intFromByteArray(byte[] bytes) {
+        return ((bytes[0] & 0xFF) << 24) |
+                ((bytes[1] & 0xFF) << 16) |
+                ((bytes[2] & 0xFF) << 8) |
+                ((bytes[3] & 0xFF) << 0);
+    }
+
+    public static final byte[] intToByteArray(int value) {
+        return new byte[] {
+                (byte) (value >>> 24),
+                (byte) (value >>> 16),
+                (byte) (value >>> 8),
+                (byte) value };
     }
 
     protected void handleCloudEvent(final CloudEvent cloudEvent) {

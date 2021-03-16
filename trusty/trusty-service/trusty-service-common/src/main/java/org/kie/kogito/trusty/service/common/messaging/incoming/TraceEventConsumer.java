@@ -54,18 +54,24 @@ public class TraceEventConsumer extends BaseEventConsumer<TraceEvent> {
     @Override
     @Incoming("kogito-tracing-decision")
     public CompletionStage<Void> handleMessage(Message<String> message) {
+        System.out.println("processing decision");
         return super.handleMessage(message);
+    }
+
+    @Incoming("kogito-tracing-decision-retry")
+    public CompletionStage<Void> handleFailedMessage(Message<String> message) {
+        return super.handleFailedMessage(message);
     }
 
     @Override
     protected void internalHandleCloudEvent(CloudEvent cloudEvent, TraceEvent payload) {
         TraceEventType traceEventType = payload.getHeader().getType();
-
-        if (traceEventType == TraceEventType.DMN) {
-            service.processDecision(cloudEvent.getId(), payload.getHeader().getResourceId().getServiceUrl(), TraceEventConverter.toDecision(payload, cloudEvent.getSource().toString()));
-        } else {
-            LOG.error("Unsupported TraceEvent type {}", traceEventType);
-        }
+        throw new RuntimeException("suca");
+        //        if (traceEventType == TraceEventType.DMN) {
+        //            service.processDecision(cloudEvent.getId(), payload.getHeader().getResourceId().getServiceUrl(), TraceEventConverter.toDecision(payload, cloudEvent.getSource().toString()));
+        //        } else {
+        //            LOG.error("Unsupported TraceEvent type {}", traceEventType);
+        //        }
     }
 
     @Override

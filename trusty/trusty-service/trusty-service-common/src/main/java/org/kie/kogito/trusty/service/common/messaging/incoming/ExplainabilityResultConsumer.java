@@ -112,6 +112,11 @@ public class ExplainabilityResultConsumer extends BaseEventConsumer<Explainabili
         return super.handleMessage(message);
     }
 
+    @Incoming("trusty-explainability-result-retry")
+    public CompletionStage<Void> handleFailedMessage(Message<String> message) {
+        return super.handleFailedMessage(message);
+    }
+
     @Override
     protected void internalHandleCloudEvent(CloudEvent cloudEvent, ExplainabilityResultDto payload) {
         String executionId = payload.getExecutionId();

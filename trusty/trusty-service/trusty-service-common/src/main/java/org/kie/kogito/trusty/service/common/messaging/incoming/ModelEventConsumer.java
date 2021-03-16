@@ -58,6 +58,11 @@ public class ModelEventConsumer extends BaseEventConsumer<ModelEvent> {
         return super.handleMessage(message);
     }
 
+    @Incoming("kogito-tracing-model-retry")
+    public CompletionStage<Void> handleFailedMessage(Message<String> message) {
+        return super.handleFailedMessage(message);
+    }
+
     @Override
     protected TypeReference<ModelEvent> getEventType() {
         return CLOUD_EVENT_TYPE;
