@@ -45,7 +45,7 @@ message DecisionInput {
     optional string name = 2;
 
     /* @Field(store = Store.YES) */
-    optional TypedVariable value = 3;
+    optional TypedVariableWithValue value = 3;
 }
 
 /* @Indexed */
@@ -60,10 +60,10 @@ message DecisionOutcome {
     optional string evaluationStatus = 3;
 
     /* @Field(store = Store.YES) */
-    optional TypedVariable outcomeResult = 4;
+    optional TypedVariableWithValue outcomeResult = 4;
 
     /* @Field(store = Store.YES) */
-    repeated TypedVariable outcomeInputs = 5;
+    repeated TypedVariableWithValue outcomeInputs = 5;
 
     /* @Field(store = Store.YES) */
     repeated ExecutionMessage messages = 6;
@@ -144,7 +144,7 @@ message SaliencyModel {
 }
 
 /* @Indexed */
-message TypedVariable {
+message TypedVariableWithValue {
     /* @Field(store = Store.YES) */
     optional string kind = 1;
 
@@ -158,7 +158,7 @@ message TypedVariable {
     optional string value = 4;
 
     /* @Field(store = Store.YES) */
-    repeated TypedVariable components = 5;
+    repeated TypedVariableWithValue components = 5;
 }
 
 /* @Indexed */

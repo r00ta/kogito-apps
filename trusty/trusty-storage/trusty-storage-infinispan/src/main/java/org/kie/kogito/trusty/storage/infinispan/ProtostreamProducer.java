@@ -81,7 +81,7 @@ public class ProtostreamProducer {
 
     @Produces
     org.infinispan.protostream.MessageMarshaller typedValueMarshaller() {
-        return new TypedVariableMarshaller(mapper);
+        return new TypedVariableWithValueMarshaller(mapper);
     }
 
     @Produces

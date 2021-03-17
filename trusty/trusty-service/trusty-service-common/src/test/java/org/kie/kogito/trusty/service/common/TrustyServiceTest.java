@@ -37,7 +37,7 @@ import org.kie.kogito.trusty.storage.api.model.DecisionInput;
 import org.kie.kogito.trusty.storage.api.model.DecisionOutcome;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityResult;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityStatus;
-import org.kie.kogito.trusty.storage.api.model.TypedVariable;
+import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
 import org.kie.kogito.trusty.storage.common.TrustyStorageService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -197,18 +197,18 @@ public class TrustyServiceTest {
                 TEST_EXECUTION_ID, TEST_SERVICE_URL, 1591692950000L, true,
                 null, "model", "modelNamespace",
                 List.of(
-                        new DecisionInput("1", "Input1", TypedVariable.buildCollection(
+                        new DecisionInput("1", "Input1", TypedVariableWithValue.buildCollection(
                                 "testList", "string", List.of(
-                                        TypedVariable.buildUnit(null, "string", toJsonNode("\"ONE\"")),
-                                        TypedVariable.buildUnit(null, "string", toJsonNode("\"TWO\""))))),
-                        new DecisionInput("2", "Input2", TypedVariable.buildStructure(
+                                        TypedVariableWithValue.buildUnit(null, "string", toJsonNode("\"ONE\"")),
+                                        TypedVariableWithValue.buildUnit(null, "string", toJsonNode("\"TWO\""))))),
+                        new DecisionInput("2", "Input2", TypedVariableWithValue.buildStructure(
                                 "author", "Person", List.of(
-                                        TypedVariable.buildUnit("Name", "string", toJsonNode("\"George Orwell\"")),
-                                        TypedVariable.buildUnit("Age", "number", toJsonNode("45")))))),
+                                        TypedVariableWithValue.buildUnit("Name", "string", toJsonNode("\"George Orwell\"")),
+                                        TypedVariableWithValue.buildUnit("Age", "number", toJsonNode("45")))))),
                 List.of(
                         new DecisionOutcome(
                                 "OUT1", "Result", "SUCCEEDED",
-                                TypedVariable.buildUnit("Result", "string", toJsonNode("\"YES\"")),
+                                TypedVariableWithValue.buildUnit("Result", "string", toJsonNode("\"YES\"")),
                                 Collections.emptyList(), Collections.emptyList())));
 
         Storage<String, Decision> decisionStorageMock = mock(Storage.class);

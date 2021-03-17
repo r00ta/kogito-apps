@@ -21,12 +21,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
+
 public class MessagingUtils {
 
     private MessagingUtils() {
     }
 
-    public static org.kie.kogito.tracing.typedvalue.TypedValue modelToTracingTypedValue(org.kie.kogito.trusty.storage.api.model.TypedVariable value) {
+    public static org.kie.kogito.tracing.typedvalue.TypedValue modelToTracingTypedValue(TypedVariableWithValue value) {
         if (value == null) {
             return null;
         }
@@ -41,14 +43,14 @@ public class MessagingUtils {
         throw new IllegalStateException("Can't convert org.kie.kogito.trusty.storage.api.model.TypedVariable of kind " + value.getKind() + " to TypedValue");
     }
 
-    public static Collection<org.kie.kogito.tracing.typedvalue.TypedValue> modelToTracingTypedValueCollection(Collection<org.kie.kogito.trusty.storage.api.model.TypedVariable> input) {
+    public static Collection<org.kie.kogito.tracing.typedvalue.TypedValue> modelToTracingTypedValueCollection(Collection<TypedVariableWithValue> input) {
         if (input == null) {
             return null;
         }
         return input.stream().map(MessagingUtils::modelToTracingTypedValue).collect(Collectors.toList());
     }
 
-    public static Map<String, org.kie.kogito.tracing.typedvalue.TypedValue> modelToTracingTypedValueMap(Collection<org.kie.kogito.trusty.storage.api.model.TypedVariable> input) {
+    public static Map<String, org.kie.kogito.tracing.typedvalue.TypedValue> modelToTracingTypedValueMap(Collection<TypedVariableWithValue> input) {
         if (input == null) {
             return null;
         }
