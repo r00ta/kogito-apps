@@ -17,13 +17,14 @@
 package org.kie.kogito.trusty.service.common.messaging;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.kie.kogito.cloudevents.CloudEventUtils;
 import org.kie.kogito.trusty.service.common.TrustyService;
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.kafka.IncomingKafkaRecordMetadata;
+import io.smallrye.reactive.messaging.kafka.KafkaMessageMetadata;
+import io.smallrye.reactive.messaging.kafka.OutgoingKafkaRecordMetadata;
 
 public abstract class BaseEventConsumer<E> {
 
@@ -62,8 +65,6 @@ public abstract class BaseEventConsumer<E> {
                 LOG.info("metadata present");
                 Header header = metadata.get().getHeaders().lastHeader("my-header");
                 if (header != null) {
-                    metadata.get().getHeaders().remove("my-header");
-                    metadata.get().getHeaders().remove("nextTimestamp");
                     LOG.info("header present");
                     retryCounter = intFromByteArray(header.value());
                 }
@@ -75,20 +76,29 @@ public abstract class BaseEventConsumer<E> {
                 LOG.error("retry counter = 10");
                 return message.ack();
             }
-            metadata.get().getHeaders().add(new RecordHeader("my-header", intToByteArray(retryCounter)));
-            metadata.get().getHeaders().add("nextTimestamp", intToByteArray((int) System.currentTimeMillis() / 1000 + 60));
-            message.withMetadata(Metadata.of(metadata));
-            return message.nack(e);
+
+            List<RecordHeader> headers = new ArrayList<>();
+            headers.add(new RecordHeader("my-header", intToByteArray(retryCounter + 1)));
+            headers.add(new RecordHeader("nextTimestamp", intToByteArray((int) System.currentTimeMillis() / 1000 + 60)));
+
+            OutgoingKafkaRecordMetadata<String> newMetadata = OutgoingKafkaRecordMetadata.<String> builder()
+                    .withKey("my-key")
+                    .withHeaders(headers)
+                    .build();
+
+            sendEventToRetryTopic(message.getPayload(), newMetadata);
         }
         return message.ack();
     }
 
+    protected abstract void sendEventToRetryTopic(String payload, KafkaMessageMetadata metadata);
+
     protected CompletionStage<Void> handleFailedMessage(final Message<String> message) {
         int nextTimestamp = getRetryTimeout(message);
-        int currentTime = (int) System.currentTimeMillis();
+        int currentTime = (int) System.currentTimeMillis() / 1000;
         if (nextTimestamp - currentTime > 0) {
             try {
-                LOG.debug("sleeping for " + (nextTimestamp - currentTime) * 1000);
+                LOG.info("sleeping for " + (nextTimestamp - currentTime) * 1000);
                 Thread.sleep((nextTimestamp - currentTime) * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -98,7 +108,7 @@ public abstract class BaseEventConsumer<E> {
         return handleMessage(message);
     }
 
-    private int getRetryTimeout(final Message<String> message) {
+    protected int getRetryTimeout(final Message<String> message) {
         Optional<IncomingKafkaRecordMetadata> metadata = message.getMetadata(IncomingKafkaRecordMetadata.class);
         if (metadata.isPresent()) {
             LOG.info("metadata present");

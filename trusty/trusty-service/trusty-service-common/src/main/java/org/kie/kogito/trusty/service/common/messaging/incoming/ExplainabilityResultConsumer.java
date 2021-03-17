@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.kie.kogito.explainability.api.ExplainabilityResultDto;
@@ -45,6 +47,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
+import io.smallrye.reactive.messaging.kafka.KafkaMessageMetadata;
 
 @ApplicationScoped
 public class ExplainabilityResultConsumer extends BaseEventConsumer<ExplainabilityResultDto> {
@@ -112,10 +115,20 @@ public class ExplainabilityResultConsumer extends BaseEventConsumer<Explainabili
         return super.handleMessage(message);
     }
 
-    @Incoming("trusty-explainability-result-retry")
+    @Incoming("trusty-explainability-result-incoming-retry")
     public CompletionStage<Void> handleFailedMessage(Message<String> message) {
         return super.handleFailedMessage(message);
     }
+
+    @Override
+    public void sendEventToRetryTopic(String payload, KafkaMessageMetadata metadata) {
+        LOG.info("Called");
+        moEmitter.send(Message.of(payload).addMetadata(metadata));
+    }
+
+    @Inject
+    @Channel("trusty-explainability-result-outgoing-retry")
+    Emitter<String> moEmitter;
 
     @Override
     protected void internalHandleCloudEvent(CloudEvent cloudEvent, ExplainabilityResultDto payload) {

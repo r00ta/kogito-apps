@@ -21,6 +21,8 @@ import java.util.concurrent.CompletionStage;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.kie.kogito.tracing.decision.event.trace.TraceEvent;
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
+import io.smallrye.reactive.messaging.kafka.KafkaMessageMetadata;
 
 @ApplicationScoped
 public class TraceEventConsumer extends BaseEventConsumer<TraceEvent> {
@@ -58,10 +61,20 @@ public class TraceEventConsumer extends BaseEventConsumer<TraceEvent> {
         return super.handleMessage(message);
     }
 
-    @Incoming("kogito-tracing-decision-retry")
+    @Incoming("kogito-tracing-decision-incoming-retry")
     public CompletionStage<Void> handleFailedMessage(Message<String> message) {
         return super.handleFailedMessage(message);
     }
+
+    @Override
+    public void sendEventToRetryTopic(String payload, KafkaMessageMetadata metadata) {
+        LOG.info("Called");
+        moEmitter.send(Message.of(payload).addMetadata(metadata));
+    }
+
+    @Inject
+    @Channel("kogito-tracing-decision-outgoing-retry")
+    Emitter<String> moEmitter;
 
     @Override
     protected void internalHandleCloudEvent(CloudEvent cloudEvent, TraceEvent payload) {
