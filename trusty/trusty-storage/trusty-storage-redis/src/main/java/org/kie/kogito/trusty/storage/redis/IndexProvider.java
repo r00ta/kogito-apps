@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import io.quarkus.runtime.Startup;
 import io.redisearch.Schema;
 
+import static org.kie.kogito.trusty.storage.common.TrustyStorageService.COUNTERFACTUAL_RESULTS_STORAGE;
 import static org.kie.kogito.trusty.storage.common.TrustyStorageService.DECISIONS_STORAGE;
 import static org.kie.kogito.trusty.storage.common.TrustyStorageService.EXPLAINABILITY_RESULTS_STORAGE;
 import static org.kie.kogito.trusty.storage.common.TrustyStorageService.MODELS_STORAGE;
@@ -54,6 +55,9 @@ public class IndexProvider {
         createModelsStorageIndex();
 
         createExplainabilityResultsStorageIndex();
+
+        createCounterfactualsResultsStorageIndex();
+
         LOGGER.debug("Creation of redis indexes completed.");
     }
 
@@ -72,5 +76,10 @@ public class IndexProvider {
     private void createExplainabilityResultsStorageIndex() {
         RedisCreateIndexEvent explainabilityIndexEvent = new RedisCreateIndexEvent(EXPLAINABILITY_RESULTS_STORAGE);
         indexManager.createIndex(explainabilityIndexEvent);
+    }
+
+    private void createCounterfactualsResultsStorageIndex() {
+        RedisCreateIndexEvent counterfactualsIndexEvent = new RedisCreateIndexEvent(COUNTERFACTUAL_RESULTS_STORAGE);
+        indexManager.createIndex(counterfactualsIndexEvent);
     }
 }

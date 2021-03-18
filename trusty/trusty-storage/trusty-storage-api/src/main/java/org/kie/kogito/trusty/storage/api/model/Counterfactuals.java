@@ -13,49 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.kie.kogito.trusty.storage.api.model;
+
+import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CounterfactualResult {
+public class Counterfactuals {
 
-    public static final String COUNTERFACTUAL_ID_FIELD = "counterfactualId";
-    public static final String COUNTERFACTUAL_SOLUTION_ID_FIELD = "solutionId";
+    public static final String COUNTERFACTUALS = "counterfactuals";
 
-    @JsonProperty(COUNTERFACTUAL_ID_FIELD)
-    private String counterfactualId;
+    @JsonProperty(COUNTERFACTUALS)
+    private Collection<Counterfactual> counterfactuals;
 
-    @JsonProperty(COUNTERFACTUAL_SOLUTION_ID_FIELD)
-    private String solutionId;
-
-    public CounterfactualResult() {
+    public Counterfactuals() {
     }
 
-    public CounterfactualResult(String counterfactualId, String solutionId) {
-        this.counterfactualId = counterfactualId;
-        this.solutionId = solutionId;
+    public Counterfactuals(Collection<Counterfactual> counterfactuals) {
+        this.counterfactuals = counterfactuals;
     }
 
-    public String getCounterfactualId() {
-        return counterfactualId;
-    }
-
-    public String getSolutionId() {
-        return solutionId;
+    public Collection<Counterfactual> getCounterfactuals() {
+        return counterfactuals;
     }
 
     //-------------
     // Test methods
     //-------------
 
-    public void setCounterfactualId(String counterfactualId) {
-        this.counterfactualId = counterfactualId;
-    }
-
-    public void setSolutionId(String solutionId) {
-        this.solutionId = solutionId;
+    public void setCounterfactuals(Collection<Counterfactual> counterfactuals) {
+        this.counterfactuals = counterfactuals;
     }
 }

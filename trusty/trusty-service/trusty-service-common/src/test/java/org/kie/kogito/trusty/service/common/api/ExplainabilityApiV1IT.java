@@ -29,9 +29,9 @@ import org.junit.jupiter.api.Test;
 import org.kie.kogito.trusty.service.common.TrustyService;
 import org.kie.kogito.trusty.service.common.responses.CounterfactualResponse;
 import org.kie.kogito.trusty.service.common.responses.SalienciesResponse;
+import org.kie.kogito.trusty.storage.api.model.Counterfactual;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualDomainCategorical;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualDomainNumerical;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualResult;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityResult;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityStatus;
@@ -85,8 +85,8 @@ class ExplainabilityApiV1IT {
                                 new FeatureImportanceModel("Feature2", 0.70293)))));
     }
 
-    private static CounterfactualResult buildValidCounterfactualRequest() {
-        return new CounterfactualResult(TEST_EXECUTION_ID, TEST_COUNTERFACTUAL_ID);
+    private static Counterfactual buildValidCounterfactual() {
+        return new Counterfactual(TEST_EXECUTION_ID, TEST_COUNTERFACTUAL_ID);
     }
 
     @Test
@@ -269,6 +269,6 @@ class ExplainabilityApiV1IT {
 
     private void mockServiceWithCounterfactualRequest() {
         when(executionService.requestCounterfactuals(eq(TEST_EXECUTION_ID), any(), any()))
-                .thenReturn(buildValidCounterfactualRequest());
+                .thenReturn(buildValidCounterfactual());
     }
 }

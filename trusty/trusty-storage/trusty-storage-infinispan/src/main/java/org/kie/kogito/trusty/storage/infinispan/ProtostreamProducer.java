@@ -88,4 +88,35 @@ public class ProtostreamProducer {
     org.infinispan.protostream.MessageMarshaller dmnModelMarshaller() {
         return new DMNModelWithMetadataMarshaller(mapper);
     }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualsMarshaller() {
+        return new CounterfactualsMarshaller(mapper);
+    }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualMarshaller() {
+        return new CounterfactualMarshaller(mapper);
+    }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualDomainCategoricalMarshaller() {
+        return new CounterfactualDomainCategoricalMarshaller(mapper);
+    }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualDomainNumericalMarshaller() {
+        return new CounterfactualDomainNumericalMarshaller(mapper);
+    }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualSearchDomainMarshaller() {
+        return new CounterfactualSearchDomainMarshaller(mapper);
+    }
+
+    @Produces
+    org.infinispan.protostream.MessageMarshaller counterfactualResultMarshaller() {
+        return new CounterfactualResultMarshaller(mapper);
+    }
+
 }

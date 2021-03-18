@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.kogito.trusty.storage.api.model;
+package org.kie.kogito.trusty.service.common.requests;
 
 import java.util.List;
+
+import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
+import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

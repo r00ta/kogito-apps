@@ -38,11 +38,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.kie.kogito.trusty.service.common.TrustyService;
+import org.kie.kogito.trusty.service.common.requests.CounterfactualRequest;
 import org.kie.kogito.trusty.service.common.responses.CounterfactualResponse;
 import org.kie.kogito.trusty.service.common.responses.DecisionStructuredInputsResponse;
 import org.kie.kogito.trusty.service.common.responses.SalienciesResponse;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualRequest;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualResult;
+import org.kie.kogito.trusty.storage.api.model.Counterfactual;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityResult;
 import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
@@ -116,7 +116,7 @@ public class ExplainabilityApiV1 {
                 .build();
     }
 
-    private Optional<CounterfactualResult> requestCounterfactualsForExecution(String executionId,
+    private Optional<Counterfactual> requestCounterfactualsForExecution(String executionId,
             List<TypedVariableWithValue> goals,
             List<CounterfactualSearchDomain> searchDomains) {
         try {
@@ -150,7 +150,7 @@ public class ExplainabilityApiV1 {
                 .build();
     }
 
-    private Optional<List<CounterfactualResult>> getCounterfactualsForExecution(String executionId) {
+    private Optional<List<Counterfactual>> getCounterfactualsForExecution(String executionId) {
         try {
             return Optional.ofNullable(trustyService.getCounterfactuals(executionId));
         } catch (IllegalArgumentException ex) {
@@ -187,7 +187,7 @@ public class ExplainabilityApiV1 {
                 .build();
     }
 
-    private Optional<CounterfactualResult> getCounterfactualForExecution(String executionId, String counterfactualId) {
+    private Optional<Counterfactual> getCounterfactualForExecution(String executionId, String counterfactualId) {
         try {
             return Optional.ofNullable(trustyService.getCounterfactual(executionId, counterfactualId));
         } catch (IllegalArgumentException ex) {

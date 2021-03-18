@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -38,8 +40,9 @@ import org.kie.kogito.trusty.service.common.messaging.MessagingUtils;
 import org.kie.kogito.trusty.service.common.messaging.incoming.ModelIdentifier;
 import org.kie.kogito.trusty.service.common.messaging.outgoing.ExplainabilityRequestProducer;
 import org.kie.kogito.trusty.service.common.models.MatchedExecutionHeaders;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualResult;
+import org.kie.kogito.trusty.storage.api.model.Counterfactual;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
+import org.kie.kogito.trusty.storage.api.model.Counterfactuals;
 import org.kie.kogito.trusty.storage.api.model.DMNModelWithMetadata;
 import org.kie.kogito.trusty.storage.api.model.Decision;
 import org.kie.kogito.trusty.storage.api.model.Execution;
@@ -185,14 +188,40 @@ public class TrustyServiceImpl implements TrustyService {
     }
 
     @Override
-    public CounterfactualResult requestCounterfactuals(String executionId,
+    public Counterfactual requestCounterfactuals(String executionId,
             List<TypedVariableWithValue> goals,
             List<CounterfactualSearchDomain> searchDomains) {
-        // TODO See https://issues.redhat.com/browse/FAI-438. Re-purpose ExplainabilityRequestDto for CF (and LIME)
-        // Decision decision = getDecisionById(executionId);
-        // Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
-        // counterfactualStorage.put(executionId, convert(desiredOutputs), convert(searchDomains));
-        //
+        Decision decision = getDecisionById(executionId);
+
+        System.out.println("===> Here0");
+
+        Storage<String, Counterfactuals> storage = storageService.getCounterfactualStorage();
+
+        System.out.println("===> Here1");
+
+        UUID counterfactualId = UUID.randomUUID();
+
+        System.out.println("===> Here2");
+
+        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId.toString(), goals, searchDomains, Collections.emptyList());
+
+        System.out.println("===> Here3");
+
+        Counterfactuals counterfactuals = new Counterfactuals();
+        if (storage.containsKey(executionId)) {
+            counterfactuals = storage.get(executionId);
+        }
+        if (Objects.isNull(counterfactuals.getCounterfactuals())) {
+            counterfactuals.setCounterfactuals(new ArrayList<>());
+        }
+        counterfactuals.getCounterfactuals().add(counterfactual);
+
+        System.out.println("===> Here4");
+
+        storage.put(executionId, counterfactuals);
+
+        System.out.println("===> Here5");
+
         // explainabilityRequestProducer.sendEvent(new ExplainabilityRequestDto(
         //      executionId,
         //      serviceUrl,
@@ -200,21 +229,24 @@ public class TrustyServiceImpl implements TrustyService {
         //      inputs,
         //      outputs));
 
-        return new CounterfactualResult(executionId, UUID.randomUUID().toString());
+        return counterfactual;
     }
 
     @Override
-    public List<CounterfactualResult> getCounterfactuals(String executionId) {
-        // TODO {manstis} I need the storage available before this can be implemented
-        // Decision decision = getDecisionById(executionId);
-        return null;
+    public List<Counterfactual> getCounterfactuals(String executionId) {
+        Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
+        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionId))
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
+        return List.copyOf(counterfactuals.getCounterfactuals());
     }
 
     @Override
-    public CounterfactualResult getCounterfactual(String executionId, String counterfactualId) {
-        // TODO {manstis} I need the storage available before this can be implemented
-        // Decision decision = getDecisionById(executionId);
-        return null;
+    public Counterfactual getCounterfactual(String executionId, String counterfactualId) {
+        Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
+        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionId))
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
+        return counterfactuals.getCounterfactuals().stream().filter(cf -> cf.getCounterfactualId().equals(counterfactualId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactual for Counterfactual Id '%s' does not exist in the storage.", counterfactualId)));
     }
 
     private ModelIdentifierDto createDecisionModelIdentifierDto(Decision decision) {

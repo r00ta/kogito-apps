@@ -15,25 +15,35 @@
  */
 package org.kie.kogito.trusty.storage.api.model;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class CounterfactualDomainCategorical implements CounterfactualDomain {
 
-    @JsonProperty("categories")
-    private Set<JsonNode> categories;
+    public static final String CATEGORIES = "categories";
+
+    @JsonProperty(CATEGORIES)
+    private Collection<JsonNode> categories;
 
     public CounterfactualDomainCategorical() {
     }
 
-    public CounterfactualDomainCategorical(Set<JsonNode> categories) {
+    public CounterfactualDomainCategorical(Collection<JsonNode> categories) {
         this.categories = categories;
     }
 
-    public Set<JsonNode> getCategories() {
+    public Collection<JsonNode> getCategories() {
         return this.categories;
+    }
+
+    //-------------
+    // Test methods
+    //-------------
+
+    public void setCategories(Collection<JsonNode> categories) {
+        this.categories = categories;
     }
 
     @Override

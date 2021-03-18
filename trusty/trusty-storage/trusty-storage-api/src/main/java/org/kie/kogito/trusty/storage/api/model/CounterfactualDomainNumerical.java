@@ -19,10 +19,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CounterfactualDomainNumerical implements CounterfactualDomain {
 
-    @JsonProperty("lowerBound")
+    public static final String LOWER_BOUND = "lowerBound";
+    public static final String UPPER_BOUND = "upperBound";
+
+    @JsonProperty(LOWER_BOUND)
     private double lowerBound;
 
-    @JsonProperty("upperBound")
+    @JsonProperty(UPPER_BOUND)
     private double upperBound;
 
     public CounterfactualDomainNumerical() {
@@ -39,6 +42,18 @@ public class CounterfactualDomainNumerical implements CounterfactualDomain {
 
     public Double getUpperBound() {
         return this.upperBound;
+    }
+
+    //-------------
+    // Test methods
+    //-------------
+
+    public void setLowerBound(double lowerBound) {
+        this.lowerBound = lowerBound;
+    }
+
+    public void setUpperBound(double upperBound) {
+        this.upperBound = upperBound;
     }
 
     @Override

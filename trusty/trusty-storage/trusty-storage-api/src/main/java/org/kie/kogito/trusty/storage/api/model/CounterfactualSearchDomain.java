@@ -25,30 +25,46 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CounterfactualSearchDomain extends TypedVariable<CounterfactualSearchDomain> {
 
-    @JsonProperty("isFixed")
-    private boolean isFixed;
+    public static final String IS_FIXED = "isFixed";
+    public static final String DOMAIN = "domain";
 
-    @JsonProperty("domain")
+    @JsonProperty(IS_FIXED)
+    private Boolean isFixed;
+
+    @JsonProperty(DOMAIN)
     private CounterfactualDomain domain;
 
-    private CounterfactualSearchDomain() {
+    public CounterfactualSearchDomain() {
     }
 
-    public CounterfactualSearchDomain(TypedValue.Kind kind, String name,
+    public CounterfactualSearchDomain(TypedValue.Kind kind,
+            String name,
             String typeRef,
             List<CounterfactualSearchDomain> components,
-            boolean isFixed,
+            Boolean isFixed,
             CounterfactualDomain domain) {
         super(kind, name, typeRef, components);
         this.isFixed = isFixed;
         this.domain = domain;
     }
 
-    public boolean isFixed() {
+    public Boolean isFixed() {
         return isFixed;
     }
 
     public CounterfactualDomain getDomain() {
         return domain;
+    }
+
+    //-------------
+    // Test methods
+    //-------------
+
+    public void setFixed(Boolean isFixed) {
+        this.isFixed = isFixed;
+    }
+
+    public void setDomain(CounterfactualDomain domain) {
+        this.domain = domain;
     }
 }
