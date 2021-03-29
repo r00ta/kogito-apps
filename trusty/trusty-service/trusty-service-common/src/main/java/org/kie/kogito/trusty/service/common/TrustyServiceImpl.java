@@ -192,35 +192,23 @@ public class TrustyServiceImpl implements TrustyService {
             List<TypedVariableWithValue> goals,
             List<CounterfactualSearchDomain> searchDomains) {
         Decision decision = getDecisionById(executionId);
-
-        System.out.println("===> Here0");
-
         Storage<String, Counterfactuals> storage = storageService.getCounterfactualStorage();
 
-        System.out.println("===> Here1");
-
-        UUID counterfactualId = UUID.randomUUID();
-
-        System.out.println("===> Here2");
-
-        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId.toString(), goals, searchDomains, Collections.emptyList());
-
-        System.out.println("===> Here3");
-
+        String counterfactualId = UUID.randomUUID().toString();
+        String counterfactualExecutionId = executionIdToCounterfactualKey(executionId);
+        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId, goals, searchDomains, Collections.emptyList());
         Counterfactuals counterfactuals = new Counterfactuals();
-        if (storage.containsKey(executionId)) {
-            counterfactuals = storage.get(executionId);
+        if (storage.containsKey(counterfactualExecutionId)) {
+            counterfactuals = storage.get(counterfactualExecutionId);
+            storage.remove(counterfactualExecutionId);
         }
         if (Objects.isNull(counterfactuals.getCounterfactuals())) {
             counterfactuals.setCounterfactuals(new ArrayList<>());
         }
         counterfactuals.getCounterfactuals().add(counterfactual);
 
-        System.out.println("===> Here4");
-
-        storage.put(executionId, counterfactuals);
-
-        System.out.println("===> Here5");
+        //TODO {manstis} I really want to put and replace in one atomic operation rather than remove above
+        storage.put(counterfactualExecutionId, counterfactuals);
 
         // explainabilityRequestProducer.sendEvent(new ExplainabilityRequestDto(
         //      executionId,
@@ -235,7 +223,7 @@ public class TrustyServiceImpl implements TrustyService {
     @Override
     public List<Counterfactual> getCounterfactuals(String executionId) {
         Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
-        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionId))
+        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionIdToCounterfactualKey(executionId)))
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
         return List.copyOf(counterfactuals.getCounterfactuals());
     }
@@ -243,7 +231,7 @@ public class TrustyServiceImpl implements TrustyService {
     @Override
     public Counterfactual getCounterfactual(String executionId, String counterfactualId) {
         Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
-        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionId))
+        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionIdToCounterfactualKey(executionId)))
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
         return counterfactuals.getCounterfactuals().stream().filter(cf -> cf.getCounterfactualId().equals(counterfactualId)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactual for Counterfactual Id '%s' does not exist in the storage.", counterfactualId)));
@@ -254,5 +242,9 @@ public class TrustyServiceImpl implements TrustyService {
                 ModelIdentifierDto.RESOURCE_ID_SEPARATOR +
                 decision.getExecutedModelName();
         return new ModelIdentifierDto("dmn", resourceId);
+    }
+
+    private String executionIdToCounterfactualKey(String executionId) {
+        return String.format("CF%s", executionId);
     }
 }
