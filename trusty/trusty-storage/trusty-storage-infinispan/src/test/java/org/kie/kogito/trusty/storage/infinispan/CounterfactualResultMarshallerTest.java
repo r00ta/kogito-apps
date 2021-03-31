@@ -26,10 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.kie.kogito.trusty.storage.api.model.CounterfactualResult.COUNTERFACTUAL_ID_FIELD;
 import static org.kie.kogito.trusty.storage.api.model.CounterfactualResult.COUNTERFACTUAL_SOLUTION_ID_FIELD;
+import static org.kie.kogito.trusty.storage.api.model.CounterfactualResult.EXECUTION_ID_FIELD;
 
 public class CounterfactualResultMarshallerTest extends MarshallerTestTemplate<CounterfactualResult> {
 
     private static final List<AbstractTestField<CounterfactualResult, ?>> TEST_FIELD_LIST = List.of(
+            new StringTestField<>(EXECUTION_ID_FIELD, "executionId", CounterfactualResult::getExecutionId, CounterfactualResult::setExecutionId),
             new StringTestField<>(COUNTERFACTUAL_ID_FIELD, "counterfactualId", CounterfactualResult::getCounterfactualId, CounterfactualResult::setCounterfactualId),
             new StringTestField<>(COUNTERFACTUAL_SOLUTION_ID_FIELD, "solutionId", CounterfactualResult::getSolutionId, CounterfactualResult::setSolutionId));
 

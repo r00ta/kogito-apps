@@ -29,7 +29,6 @@ public class Counterfactual {
     public static final String COUNTERFACTUAL_ID_FIELD = "counterfactualId";
     public static final String COUNTERFACTUAL_GOALS = "goals";
     public static final String COUNTERFACTUAL_SEARCH_DOMAINS = "searchDomains";
-    public static final String COUNTERFACTUAL_RESULTS_FIELD = "results";
 
     @JsonProperty(EXECUTION_ID_FIELD)
     private String executionId;
@@ -43,26 +42,21 @@ public class Counterfactual {
     @JsonProperty(COUNTERFACTUAL_SEARCH_DOMAINS)
     private Collection<CounterfactualSearchDomain> searchDomains;
 
-    @JsonProperty(COUNTERFACTUAL_RESULTS_FIELD)
-    private Collection<CounterfactualResult> results;
-
     public Counterfactual() {
     }
 
     public Counterfactual(String executionId, String counterfactualId) {
-        this(executionId, counterfactualId, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(executionId, counterfactualId, new ArrayList<>(), new ArrayList<>());
     }
 
     public Counterfactual(String executionId,
             String counterfactualId,
             Collection<TypedVariableWithValue> goals,
-            Collection<CounterfactualSearchDomain> searchDomains,
-            Collection<CounterfactualResult> results) {
+            Collection<CounterfactualSearchDomain> searchDomains) {
         this.executionId = executionId;
         this.counterfactualId = counterfactualId;
         this.goals = goals;
         this.searchDomains = searchDomains;
-        this.results = results;
     }
 
     public String getExecutionId() {
@@ -79,10 +73,6 @@ public class Counterfactual {
 
     public Collection<CounterfactualSearchDomain> getSearchDomains() {
         return searchDomains;
-    }
-
-    public Collection<CounterfactualResult> getResults() {
-        return results;
     }
 
     //-------------
@@ -104,7 +94,4 @@ public class Counterfactual {
         this.searchDomains = searchDomains;
     }
 
-    public void setResults(Collection<CounterfactualResult> results) {
-        this.results = results;
-    }
 }

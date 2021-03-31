@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -42,7 +40,6 @@ import org.kie.kogito.trusty.service.common.messaging.outgoing.ExplainabilityReq
 import org.kie.kogito.trusty.service.common.models.MatchedExecutionHeaders;
 import org.kie.kogito.trusty.storage.api.model.Counterfactual;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
-import org.kie.kogito.trusty.storage.api.model.Counterfactuals;
 import org.kie.kogito.trusty.storage.api.model.DMNModelWithMetadata;
 import org.kie.kogito.trusty.storage.api.model.Decision;
 import org.kie.kogito.trusty.storage.api.model.Execution;
@@ -192,23 +189,11 @@ public class TrustyServiceImpl implements TrustyService {
             List<TypedVariableWithValue> goals,
             List<CounterfactualSearchDomain> searchDomains) {
         Decision decision = getDecisionById(executionId);
-        Storage<String, Counterfactuals> storage = storageService.getCounterfactualStorage();
+        Storage<String, Counterfactual> storage = storageService.getCounterfactualStorage();
 
         String counterfactualId = UUID.randomUUID().toString();
-        String counterfactualExecutionId = executionIdToCounterfactualKey(executionId);
-        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId, goals, searchDomains, Collections.emptyList());
-        Counterfactuals counterfactuals = new Counterfactuals();
-        if (storage.containsKey(counterfactualExecutionId)) {
-            counterfactuals = storage.get(counterfactualExecutionId);
-            storage.remove(counterfactualExecutionId);
-        }
-        if (Objects.isNull(counterfactuals.getCounterfactuals())) {
-            counterfactuals.setCounterfactuals(new ArrayList<>());
-        }
-        counterfactuals.getCounterfactuals().add(counterfactual);
-
-        //TODO {manstis} I really want to put and replace in one atomic operation rather than remove above
-        storage.put(counterfactualExecutionId, counterfactuals);
+        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId, goals, searchDomains);
+        storage.put(counterfactualId, counterfactual);
 
         // explainabilityRequestProducer.sendEvent(new ExplainabilityRequestDto(
         //      executionId,
@@ -222,19 +207,56 @@ public class TrustyServiceImpl implements TrustyService {
 
     @Override
     public List<Counterfactual> getCounterfactuals(String executionId) {
-        Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
-        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionIdToCounterfactualKey(executionId)))
-                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
-        return List.copyOf(counterfactuals.getCounterfactuals());
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterExecutionId = QueryFilterFactory.equalTo(Counterfactual.EXECUTION_ID_FIELD, executionId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(Collections.singletonList(filterExecutionId)).execute();
+
+        return List.copyOf(counterfactuals);
     }
 
     @Override
     public Counterfactual getCounterfactual(String executionId, String counterfactualId) {
-        Storage<String, Counterfactuals> counterfactualStorage = storageService.getCounterfactualStorage();
-        Counterfactuals counterfactuals = Optional.ofNullable(counterfactualStorage.get(executionIdToCounterfactualKey(executionId)))
-                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactuals for Execution Id '%s' do not exist in the storage.", executionId)));
-        return counterfactuals.getCounterfactuals().stream().filter(cf -> cf.getCounterfactualId().equals(counterfactualId)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("Counterfactual for Counterfactual Id '%s' does not exist in the storage.", counterfactualId)));
+        return opt2(executionId, counterfactualId);
+    }
+
+    private Counterfactual opt1(String executionId, String counterfactualId) {
+        //Querying on what requires a composite index does not work
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterExecutionId = QueryFilterFactory.equalTo(Counterfactual.EXECUTION_ID_FIELD, executionId);
+        AttributeFilter<String> filterCounterfactualId = QueryFilterFactory.equalTo(Counterfactual.COUNTERFACTUAL_ID_FIELD, counterfactualId);
+        List<AttributeFilter<?>> filters = List.of(filterExecutionId, filterCounterfactualId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(filters).execute();
+        if (counterfactuals.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId));
+        }
+        if (counterfactuals.size() > 1) {
+            throw new IllegalArgumentException(String.format("Multiple Counterfactuals for Execution Id '%s' and Counterfactual Id '%s' found in the storage.", executionId, counterfactualId));
+        }
+        return counterfactuals.get(0);
+    }
+
+    private Counterfactual opt2(String executionId, String counterfactualId) {
+        //Querying on the FIRST field indexed seems to work OK, but I need to filter on the other field in Java
+        List<Counterfactual> counterfactuals = getCounterfactuals(executionId);
+        return counterfactuals.stream().filter(cf -> cf.getCounterfactualId().equals(counterfactualId)).findFirst().orElseThrow(
+                () -> new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId)));
+    }
+
+    private Counterfactual opt3(String executionId, String counterfactualId) {
+        //Querying on the SECOND field indexed does not work as expected either (CFID is a UUID so we should be able to query on it alone)
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterCounterfactualId = QueryFilterFactory.equalTo(Counterfactual.COUNTERFACTUAL_ID_FIELD, counterfactualId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(Collections.singletonList(filterCounterfactualId)).execute();
+        if (counterfactuals.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId));
+        }
+        if (counterfactuals.size() > 1) {
+            throw new IllegalArgumentException(String.format("Multiple Counterfactuals for Execution Id '%s' and Counterfactual Id '%s' found in the storage.", executionId, counterfactualId));
+        }
+        return counterfactuals.get(0);
     }
 
     private ModelIdentifierDto createDecisionModelIdentifierDto(Decision decision) {
@@ -244,7 +266,4 @@ public class TrustyServiceImpl implements TrustyService {
         return new ModelIdentifierDto("dmn", resourceId);
     }
 
-    private String executionIdToCounterfactualKey(String executionId) {
-        return String.format("CF%s", executionId);
-    }
 }

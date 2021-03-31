@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.kie.kogito.trusty.storage.api.model.Counterfactual;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualResult;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
 import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
 
@@ -37,8 +36,7 @@ public class CounterfactualMarshaller extends AbstractModelMarshaller<Counterfac
                 reader.readString(Counterfactual.EXECUTION_ID_FIELD),
                 reader.readString(Counterfactual.COUNTERFACTUAL_ID_FIELD),
                 reader.readCollection(Counterfactual.COUNTERFACTUAL_GOALS, new ArrayList<>(), TypedVariableWithValue.class),
-                reader.readCollection(Counterfactual.COUNTERFACTUAL_SEARCH_DOMAINS, new ArrayList<>(), CounterfactualSearchDomain.class),
-                reader.readCollection(Counterfactual.COUNTERFACTUAL_RESULTS_FIELD, new ArrayList<>(), CounterfactualResult.class));
+                reader.readCollection(Counterfactual.COUNTERFACTUAL_SEARCH_DOMAINS, new ArrayList<>(), CounterfactualSearchDomain.class));
     }
 
     @Override
@@ -47,6 +45,5 @@ public class CounterfactualMarshaller extends AbstractModelMarshaller<Counterfac
         writer.writeString(Counterfactual.COUNTERFACTUAL_ID_FIELD, input.getCounterfactualId());
         writer.writeCollection(Counterfactual.COUNTERFACTUAL_GOALS, input.getGoals(), TypedVariableWithValue.class);
         writer.writeCollection(Counterfactual.COUNTERFACTUAL_SEARCH_DOMAINS, input.getSearchDomains(), CounterfactualSearchDomain.class);
-        writer.writeCollection(Counterfactual.COUNTERFACTUAL_RESULTS_FIELD, input.getResults(), CounterfactualResult.class);
     }
 }

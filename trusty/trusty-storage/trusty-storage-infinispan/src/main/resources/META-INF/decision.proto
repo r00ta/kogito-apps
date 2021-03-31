@@ -186,13 +186,6 @@ message DMNModelWithMetadata {
 }
 
 /* @Indexed */
-message Counterfactuals {
-
-    /* @Field(store = Store.YES) */
-    repeated Counterfactual counterfactuals = 1;
-}
-
-/* @Indexed */
 message Counterfactual {
 
     /* @Field(store = Store.YES) */
@@ -207,8 +200,6 @@ message Counterfactual {
     /* @Field(store = Store.YES) */
     repeated CounterfactualSearchDomain searchDomains = 4;
 
-    /* @Field(store = Store.YES) */
-    repeated CounterfactualResult results = 5;
 }
 
 /* @Indexed */
@@ -257,9 +248,13 @@ message CounterfactualSearchDomain {
 
 /* @Indexed */
 message CounterfactualResult {
-    /* @Field(store = Store.YES) */
-    optional string counterfactualId = 1;
 
     /* @Field(store = Store.YES) */
-    optional string solutionId = 2;
+    optional string executionId = 1;
+
+    /* @Field(store = Store.YES) */
+    optional string counterfactualId = 2;
+
+    /* @Field(store = Store.YES) */
+    optional string solutionId = 3;
 }

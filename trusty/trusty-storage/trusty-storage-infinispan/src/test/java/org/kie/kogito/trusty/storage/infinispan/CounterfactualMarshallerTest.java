@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.infinispan.protostream.MessageMarshaller;
 import org.kie.kogito.trusty.storage.api.model.Counterfactual;
-import org.kie.kogito.trusty.storage.api.model.CounterfactualResult;
 import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
 import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
 import org.kie.kogito.trusty.storage.infinispan.testfield.AbstractTestField;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.kie.kogito.trusty.storage.api.model.Counterfactual.COUNTERFACTUAL_GOALS;
 import static org.kie.kogito.trusty.storage.api.model.Counterfactual.COUNTERFACTUAL_ID_FIELD;
-import static org.kie.kogito.trusty.storage.api.model.Counterfactual.COUNTERFACTUAL_RESULTS_FIELD;
 import static org.kie.kogito.trusty.storage.api.model.Counterfactual.COUNTERFACTUAL_SEARCH_DOMAINS;
 import static org.kie.kogito.trusty.storage.api.model.Counterfactual.EXECUTION_ID_FIELD;
 
@@ -41,8 +39,7 @@ public class CounterfactualMarshallerTest extends MarshallerTestTemplate<Counter
             new StringTestField<>(EXECUTION_ID_FIELD, "executionId", Counterfactual::getExecutionId, Counterfactual::setExecutionId),
             new StringTestField<>(COUNTERFACTUAL_ID_FIELD, "test", Counterfactual::getCounterfactualId, Counterfactual::setCounterfactualId),
             new CollectionTestField<>(COUNTERFACTUAL_GOALS, Collections.emptyList(), Counterfactual::getGoals, Counterfactual::setGoals, TypedVariableWithValue.class),
-            new CollectionTestField<>(COUNTERFACTUAL_SEARCH_DOMAINS, Collections.emptyList(), Counterfactual::getSearchDomains, Counterfactual::setSearchDomains, CounterfactualSearchDomain.class),
-            new CollectionTestField<>(COUNTERFACTUAL_RESULTS_FIELD, Collections.emptyList(), Counterfactual::getResults, Counterfactual::setResults, CounterfactualResult.class));
+            new CollectionTestField<>(COUNTERFACTUAL_SEARCH_DOMAINS, Collections.emptyList(), Counterfactual::getSearchDomains, Counterfactual::setSearchDomains, CounterfactualSearchDomain.class));
 
     public CounterfactualMarshallerTest() {
         super(Counterfactual.class);

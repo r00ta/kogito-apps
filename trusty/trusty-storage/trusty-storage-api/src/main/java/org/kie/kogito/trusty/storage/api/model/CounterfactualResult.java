@@ -22,8 +22,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CounterfactualResult {
 
+    public static final String EXECUTION_ID_FIELD = "executionId";
     public static final String COUNTERFACTUAL_ID_FIELD = "counterfactualId";
     public static final String COUNTERFACTUAL_SOLUTION_ID_FIELD = "solutionId";
+
+    @JsonProperty(EXECUTION_ID_FIELD)
+    private String executionId;
 
     @JsonProperty(COUNTERFACTUAL_ID_FIELD)
     private String counterfactualId;
@@ -34,9 +38,14 @@ public class CounterfactualResult {
     public CounterfactualResult() {
     }
 
-    public CounterfactualResult(String counterfactualId, String solutionId) {
+    public CounterfactualResult(String executionId, String counterfactualId, String solutionId) {
+        this.executionId = executionId;
         this.counterfactualId = counterfactualId;
         this.solutionId = solutionId;
+    }
+
+    public String getExecutionId() {
+        return executionId;
     }
 
     public String getCounterfactualId() {
@@ -50,6 +59,10 @@ public class CounterfactualResult {
     //-------------
     // Test methods
     //-------------
+
+    public void setExecutionId(String executionId) {
+        this.executionId = executionId;
+    }
 
     public void setCounterfactualId(String counterfactualId) {
         this.counterfactualId = counterfactualId;

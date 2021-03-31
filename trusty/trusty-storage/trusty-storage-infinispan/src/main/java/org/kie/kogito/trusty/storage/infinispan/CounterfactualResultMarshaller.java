@@ -30,12 +30,14 @@ public class CounterfactualResultMarshaller extends AbstractModelMarshaller<Coun
     @Override
     public CounterfactualResult readFrom(ProtoStreamReader reader) throws IOException {
         return new CounterfactualResult(
+                reader.readString(CounterfactualResult.EXECUTION_ID_FIELD),
                 reader.readString(CounterfactualResult.COUNTERFACTUAL_ID_FIELD),
                 reader.readString(CounterfactualResult.COUNTERFACTUAL_SOLUTION_ID_FIELD));
     }
 
     @Override
     public void writeTo(ProtoStreamWriter writer, CounterfactualResult input) throws IOException {
+        writer.writeString(CounterfactualResult.EXECUTION_ID_FIELD, input.getExecutionId());
         writer.writeString(CounterfactualResult.COUNTERFACTUAL_ID_FIELD, input.getCounterfactualId());
         writer.writeString(CounterfactualResult.COUNTERFACTUAL_SOLUTION_ID_FIELD, input.getSolutionId());
     }
