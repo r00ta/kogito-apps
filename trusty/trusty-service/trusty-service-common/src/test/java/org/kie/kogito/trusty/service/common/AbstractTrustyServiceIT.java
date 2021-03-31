@@ -19,6 +19,8 @@ package org.kie.kogito.trusty.service.common;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -27,9 +29,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.kogito.trusty.service.common.messaging.incoming.ModelIdentifier;
 import org.kie.kogito.trusty.service.common.models.MatchedExecutionHeaders;
+import org.kie.kogito.trusty.storage.api.model.Counterfactual;
 import org.kie.kogito.trusty.storage.api.model.DMNModelWithMetadata;
 import org.kie.kogito.trusty.storage.api.model.Decision;
 import org.kie.kogito.trusty.storage.common.TrustyStorageService;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class AbstractTrustyServiceIT {
 
@@ -41,6 +48,8 @@ public abstract class AbstractTrustyServiceIT {
 
     @BeforeEach
     public void setup() {
+        trustyStorageService.getCounterfactualStorage().clear();
+        trustyStorageService.getCounterfactualResultStorage().clear();
         trustyStorageService.getExplainabilityResultStorage().clear();
         trustyStorageService.getDecisionsStorage().clear();
         trustyStorageService.getModelStorage().clear();
@@ -125,6 +134,79 @@ public abstract class AbstractTrustyServiceIT {
         Assertions.assertThrows(IllegalArgumentException.class, this::getModel);
     }
 
+    @Test
+    public void testStoreSingleAndRetrieveSingleCounterfactualsWithEmptyDefinition() {
+        String executionId = "myCFExecution1";
+        storeExecution(executionId, 0L);
+
+        Counterfactual request = trustyService.requestCounterfactuals(executionId, Collections.emptyList(), Collections.emptyList());
+
+        assertNotNull(request);
+        assertEquals(request.getExecutionId(), executionId);
+        assertNotNull(request.getCounterfactualId());
+
+        Counterfactual result = trustyService.getCounterfactual(executionId, request.getCounterfactualId());
+        assertNotNull(result);
+        assertEquals(request.getExecutionId(), result.getExecutionId());
+        assertEquals(request.getCounterfactualId(), result.getCounterfactualId());
+    }
+
+    @Test
+    public void testStoreMultipleAndRetrieveAllCounterfactualsWithEmptyDefinition() {
+        String executionId = "myCFExecution2";
+        storeExecution(executionId, 0L);
+
+        Counterfactual request1 = trustyService.requestCounterfactuals(executionId, Collections.emptyList(), Collections.emptyList());
+        Counterfactual request2 = trustyService.requestCounterfactuals(executionId, Collections.emptyList(), Collections.emptyList());
+
+        List<Counterfactual> result = trustyService.getCounterfactuals(executionId);
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertTrue(result.stream().anyMatch(c -> c.getCounterfactualId().equals(request1.getCounterfactualId())));
+        assertTrue(result.stream().anyMatch(c -> c.getCounterfactualId().equals(request2.getCounterfactualId())));
+    }
+
+    @Test
+    public void testStoreMultipleAndRetrieveSingleCounterfactualWithEmptyDefinition() {
+        String executionId = "myCFExecution3";
+        storeExecution(executionId, 0L);
+
+        Counterfactual request1 = trustyService.requestCounterfactuals(executionId, Collections.emptyList(), Collections.emptyList());
+        Counterfactual request2 = trustyService.requestCounterfactuals(executionId, Collections.emptyList(), Collections.emptyList());
+
+        Counterfactual result1 = trustyService.getCounterfactual(executionId, request1.getCounterfactualId());
+        assertNotNull(result1);
+        assertEquals(request1.getCounterfactualId(), result1.getCounterfactualId());
+
+        Counterfactual result2 = trustyService.getCounterfactual(executionId, request2.getCounterfactualId());
+        assertNotNull(result2);
+        assertEquals(request2.getCounterfactualId(), result2.getCounterfactualId());
+    }
+
+    @Test
+    public void testStoreMultipleForMultipleExecutionsAndRetrieveSingleCounterfactualWithEmptyDefinition() {
+        String executionId1 = "myCFExecution1";
+        storeExecution(executionId1, 0L);
+
+        String executionId2 = "myCFExecution2";
+        storeExecution(executionId2, 0L);
+
+        Counterfactual request1 = trustyService.requestCounterfactuals(executionId1, Collections.emptyList(), Collections.emptyList());
+        assertNotNull(request1);
+        assertEquals(request1.getExecutionId(), executionId1);
+        assertNotNull(request1.getCounterfactualId());
+
+        Counterfactual request2 = trustyService.requestCounterfactuals(executionId2, Collections.emptyList(), Collections.emptyList());
+        assertNotNull(request2);
+        assertEquals(request2.getExecutionId(), executionId2);
+        assertNotNull(request2.getCounterfactualId());
+
+        Counterfactual result1 = trustyService.getCounterfactual(executionId1, request1.getCounterfactualId());
+        assertNotNull(result1);
+        assertEquals(request1.getExecutionId(), result1.getExecutionId());
+        assertEquals(request1.getCounterfactualId(), result1.getCounterfactualId());
+    }
+
     private Decision storeExecution(String executionId, Long timestamp) {
         Decision decision = new Decision();
         decision.setExecutionId(executionId);
@@ -152,4 +234,5 @@ public abstract class AbstractTrustyServiceIT {
                 "namespace");
         return trustyService.getModelById(identifier);
     }
+
 }

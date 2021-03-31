@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -37,10 +38,13 @@ import org.kie.kogito.trusty.service.common.messaging.MessagingUtils;
 import org.kie.kogito.trusty.service.common.messaging.incoming.ModelIdentifier;
 import org.kie.kogito.trusty.service.common.messaging.outgoing.ExplainabilityRequestProducer;
 import org.kie.kogito.trusty.service.common.models.MatchedExecutionHeaders;
+import org.kie.kogito.trusty.storage.api.model.Counterfactual;
+import org.kie.kogito.trusty.storage.api.model.CounterfactualSearchDomain;
 import org.kie.kogito.trusty.storage.api.model.DMNModelWithMetadata;
 import org.kie.kogito.trusty.storage.api.model.Decision;
 import org.kie.kogito.trusty.storage.api.model.Execution;
 import org.kie.kogito.trusty.storage.api.model.ExplainabilityResult;
+import org.kie.kogito.trusty.storage.api.model.TypedVariableWithValue;
 import org.kie.kogito.trusty.storage.common.TrustyStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,10 +184,86 @@ public class TrustyServiceImpl implements TrustyService {
         return storage.get(modelIdentifier.getIdentifier());
     }
 
+    @Override
+    public Counterfactual requestCounterfactuals(String executionId,
+            List<TypedVariableWithValue> goals,
+            List<CounterfactualSearchDomain> searchDomains) {
+        Decision decision = getDecisionById(executionId);
+        Storage<String, Counterfactual> storage = storageService.getCounterfactualStorage();
+
+        String counterfactualId = UUID.randomUUID().toString();
+        Counterfactual counterfactual = new Counterfactual(executionId, counterfactualId, goals, searchDomains);
+        storage.put(counterfactualId, counterfactual);
+
+        // explainabilityRequestProducer.sendEvent(new ExplainabilityRequestDto(
+        //      executionId,
+        //      serviceUrl,
+        //      createDecisionModelIdentifierDto(decision),
+        //      inputs,
+        //      outputs));
+
+        return counterfactual;
+    }
+
+    @Override
+    public List<Counterfactual> getCounterfactuals(String executionId) {
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterExecutionId = QueryFilterFactory.equalTo(Counterfactual.EXECUTION_ID_FIELD, executionId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(Collections.singletonList(filterExecutionId)).execute();
+
+        return List.copyOf(counterfactuals);
+    }
+
+    @Override
+    public Counterfactual getCounterfactual(String executionId, String counterfactualId) {
+        return opt2(executionId, counterfactualId);
+    }
+
+    private Counterfactual opt1(String executionId, String counterfactualId) {
+        //Querying on what requires a composite index does not work
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterExecutionId = QueryFilterFactory.equalTo(Counterfactual.EXECUTION_ID_FIELD, executionId);
+        AttributeFilter<String> filterCounterfactualId = QueryFilterFactory.equalTo(Counterfactual.COUNTERFACTUAL_ID_FIELD, counterfactualId);
+        List<AttributeFilter<?>> filters = List.of(filterExecutionId, filterCounterfactualId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(filters).execute();
+        if (counterfactuals.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId));
+        }
+        if (counterfactuals.size() > 1) {
+            throw new IllegalArgumentException(String.format("Multiple Counterfactuals for Execution Id '%s' and Counterfactual Id '%s' found in the storage.", executionId, counterfactualId));
+        }
+        return counterfactuals.get(0);
+    }
+
+    private Counterfactual opt2(String executionId, String counterfactualId) {
+        //Querying on the FIRST field indexed seems to work OK, but I need to filter on the other field in Java
+        List<Counterfactual> counterfactuals = getCounterfactuals(executionId);
+        return counterfactuals.stream().filter(cf -> cf.getCounterfactualId().equals(counterfactualId)).findFirst().orElseThrow(
+                () -> new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId)));
+    }
+
+    private Counterfactual opt3(String executionId, String counterfactualId) {
+        //Querying on the SECOND field indexed does not work as expected either (CFID is a UUID so we should be able to query on it alone)
+        Storage<String, Counterfactual> counterfactualStorage = storageService.getCounterfactualStorage();
+
+        AttributeFilter<String> filterCounterfactualId = QueryFilterFactory.equalTo(Counterfactual.COUNTERFACTUAL_ID_FIELD, counterfactualId);
+        List<Counterfactual> counterfactuals = counterfactualStorage.query().filter(Collections.singletonList(filterCounterfactualId)).execute();
+        if (counterfactuals.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Counterfactual for Execution Id '%s' and Counterfactual Id '%s' does not exist in the storage.", executionId, counterfactualId));
+        }
+        if (counterfactuals.size() > 1) {
+            throw new IllegalArgumentException(String.format("Multiple Counterfactuals for Execution Id '%s' and Counterfactual Id '%s' found in the storage.", executionId, counterfactualId));
+        }
+        return counterfactuals.get(0);
+    }
+
     private ModelIdentifierDto createDecisionModelIdentifierDto(Decision decision) {
         String resourceId = decision.getExecutedModelNamespace() +
                 ModelIdentifierDto.RESOURCE_ID_SEPARATOR +
                 decision.getExecutedModelName();
         return new ModelIdentifierDto("dmn", resourceId);
     }
+
 }
